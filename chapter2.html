@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Приключения Тимохи: Глава 2</title>
+	 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+	<style>
+        body {
+            margin: 0;
+            background-color: #111; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh;
+            overflow: hidden;
+        }
+        img {
+        	width: 20px;
+        	height: 20px;
+        }
+    </style>
+</head>
+<body>
+	<h1 style="color: white;">Приключение Тимохи: Глава 2</h1><br>
+
+	<script>
+		class MainScene extends Phaser.Scene {
+			constructor() {
+				super('MainScene');
+			}
+
+			preload() {
+				this.load.image('timoha', 'https://capybaraabcnet.github.io/TimohaGame/photo.png');
+				this.load.image('burger', 'https://static.vecteezy.com/system/resources/previews/041/290/624/non_2x/ai-generated-fresh-burger-isolated-on-transparent-background-free-png.png');
+			}
+
+			create() {
+				this.timoha = this.physics.add.sprite(200, 400, 'timoha').setScale(0.3);
+				this.timoha.body.setImmovable(true);
+				this.timoha.body.setAllowGravity(false);
+
+				this.moveLeft = false;
+				this.moveRight = false;
+
+				this.fallingObjects = this.physics.add.group();
+
+				this.time.addEvent({
+					delay: 800,
+					callback: this.spawnObject,
+					callbackScope: this,
+					loop: true
+				});
+
+				this.physics.add.overlap(this.timoha, this.fallingObjects, this.hitObject, null, this);
+
+				this.leftBg = this.add.rectangle(80, 540, 80, 70, 0x555555, 0.8).setInteractive();
+				this.add.text(80, 540, '◀', { fontSize: '40px', fill: '#fff' }).setOrigin(0.5);
+
+				this.leftBg.on('pointerdown', () => this.moveLeft = true);
+				this.leftBg.on('pointerup', () => this.moveLeft = false);
+				this.leftBg.on('pointerout', () => this.moveLeft = false);
+
+				this.rightBg = this.add.rectangle(320, 540, 80, 70, 0x555555, 0.8).setInteractive();
+                this.add.text(320, 540, '▶', { fontSize: '40px', fill: '#fff' }).setOrigin(0.5);
+                this.rightBg.on('pointerdown', () => this.moveRight = true);
+                this.rightBg.on('pointerup', () => this.moveRight = false);
+                this.rightBg.on('pointerout', () => this.moveRight = false);
+
+                this.isAlive = true;
+			}
+
+			spawnObject() {
+				if (!this.isAlive) return;
+
+				let randomX = Phaser.Math.Between(30, 370);
+				let obj = this.fallingObjects.create(randomX, -50, 'burger');
+				obj.setScale(0.1);
+				obj.setVelocityY(250);
+			}
+
+			hitObject() {
+				if (!this.isAlive) return;
+
+				this.isAlive = false;
+				this.physics.pause();
+				this.timoha.setTint(0xff0000);
+
+				this.leftBg.disableInteractive();
+				this.rightBg.disableInteractive();
+
+				this.add.text(200, 250, 'GAME OVER', { fontSize: '48px', fill: '#f00', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5);
+                this.add.text(200, 320, 'Кликни, чтобы заново', { fontSize: '18px', fill: '#fff' }).setOrigin(0.5);
+
+                this.input.on('pointerdown', () => this.scene.restart());
+			}
+
+			update() {
+				if (!this.isAlive) return;
+
+				if (this.moveLeft) {
+					this.timoha.x -= 7;
+					this.timoha.setFlipX(true);
+				}
+				else if (this.moveRight) {
+					this.timoha.x += 7;
+					this.timoha.setFlipX(false);
+				}
+
+				if (this.timoha.x < 50) this.timoha.x = 50;
+				else if (this.timoha.x > 350) this.timoha.x = 350;
+
+				this.fallingObjects.getChildren().forEach((obj) => {
+					if (obj.y > 650) {
+						obj.destroy();
+					}
+				});
+			}
+		}
+
+		const config = {
+			type: Phaser.AUTO,
+			width: 400,
+			height: 600,
+			backgroundColor: "#2d2d2d",
+			physics: {
+				default: 'arcade',
+				arcade: {
+					gravity: { y: 0 }
+				}
+			},
+			scene: MainScene
+		};
+
+		const game  = new Phaser.Game(config);
+	</script>
+</body>
+</html>
